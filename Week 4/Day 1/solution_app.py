@@ -126,10 +126,7 @@ async def start_chat():
     The user session is a dictionary that is unique to each user session, and is stored in the memory of the server.
     """
 
-    lcel_rag_chain = (
-        {"context": itemgetter("query") | hf_retriever, "query": itemgetter("query")}
-        | rag_prompt | hf_llm
-    )
+    lcel_rag_chain = rag_prompt | hf_llm
 
     cl.user_session.set("lcel_rag_chain", lcel_rag_chain)
 
@@ -146,7 +143,7 @@ async def main(message: cl.Message):
 
     msg = cl.Message(content="")
 
-    for chunk in await cl.make_async(lcel_rag_chain.stream)(
+    async for chunk in lcel_rag_chain.astream(
         {"query": message.content},
         config=RunnableConfig(callbacks=[cl.LangchainCallbackHandler()]),
     ):
